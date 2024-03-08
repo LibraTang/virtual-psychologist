@@ -1,14 +1,14 @@
 import os
 import gradio as gr
+import numpy as np
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_openai import ChatOpenAI
-
+from transformers import pipeline
 
 os.environ['OPENAI_API_KEY'] = 'EMPTY'
 os.environ['OPENAI_API_BASE'] = 'http://100.96.103.70:8000/v1'
-
 
 template = """Assistant是心理咨询师，帮助Human纾解心理压力与解决心理困惑。
 
@@ -56,10 +56,25 @@ chain = LLMChain(
     verbose=True
 )
 
+# transcriber = pipeline("automatic-speech-recognition", model="openai/whisper-base")
 
-def predict(message, history):
+
+def predict(audio, text):
+    # sr, y = audio
+    # y = y.astype(np.float32)
+    # y /= np.max(np.abs(y))
+
+    # message = transcriber({"sampling_rate": sr, "raw": y})["text"]
+    message = text
+
     response = chain.predict(human_input=message)
     return response
 
 
-gr.ChatInterface(predict).launch()
+demo = gr.Interface(
+    fn=predict,
+    inputs=[gr.Audio(sources=['microphone'], label='此处说话...'), 'text'],
+    outputs=gr.Textbox(),
+)
+
+demo.launch()
